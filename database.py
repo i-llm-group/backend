@@ -1,108 +1,136 @@
-from tinydb import TinyDB, Query
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    Boolean,
+)
+from sqlalchemy.orm import relationship, declarative_base, sessionmaker
+from typing import List
+from objprint import op
+
+Base = declarative_base()
 
 
-class Course:
-    def __init__(self, title, syllabus):
-        self.title = title
-        self.syllabus = syllabus
-        self.lectures = []
-
-    def add_lecture(self, lecture):
-        self.lectures.append(lecture)
-
-    def remove_lecture(self, lecture):
-        self.lectures.remove(lecture)
-
-    def serialize(self):
-        return {
-            "title": self.title,
-            "syllabus": self.syllabus,
-            "lectures": [lecture.serialize() for lecture in self.lectures],
-        }
-
-    @staticmethod
-    def deserialize(data):
-        course = Course(data["title"], data["syllabus"])
-        course.lectures = [
-            Lecture.deserialize(lecture_data) for lecture_data in data["lectures"]
-        ]
-        return course
+class Course(Base):
+    __tablename__ = "courses"
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    syllabus = Column(String)
+    lectures = relationship("Lecture", back_populates="course")
 
 
-class Lecture:
-    def __init__(self, title):
-        self.title = title
-        self.resources = []
-        self.cards = []
-
-    def add_resource(self, resource):
-        self.resources.append(resource)
-
-    def remove_resource(self, resource):
-        self.resources.remove(resource)
-
-    def add_card(self, card):
-        self.cards.append(card)
-
-    def remove_card(self, card):
-        self.cards.remove(card)
-
-    def serialize(self):
-        return {
-            "title": self.title,
-            "resources": self.resources,
-            "cards": [card.serialize() for card in self.cards],
-        }
-
-    @staticmethod
-    def deserialize(data):
-        lecture = Lecture(data["title"])
-        lecture.resources = data["resources"]
-        lecture.cards = [Card.deserialize(card_data) for card_data in data["cards"]]
-        return lecture
+class Lecture(Base):
+    __tablename__ = "lectures"
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    resources = Column(String)
+    course_id = Column(Integer, ForeignKey("courses.id"))
+    course = relationship("Course", back_populates="lectures")
+    cards = relationship("Card", back_populates="lecture")
 
 
-class Card:
-    def __init__(self, skipped=False, count=0):
-        self.skipped = skipped
-        self.count = count
-
-    def serialize(self):
-        return {"skipped": self.skipped, "count": self.count}
-
-    @staticmethod
-    def deserialize(data):
-        return Card(data["skipped"], data["count"])
+class Card(Base):
+    __tablename__ = "cards"
+    id = Column(Integer, primary_key=True)
+    content = Column(String, nullable=False)
+    skipped = Column(Boolean, default=False)
+    presence_count = Column(Integer, default=0)
+    lecture_id = Column(Integer, ForeignKey("lectures.id"))
+    lecture = relationship("Lecture", back_populates="cards")
 
 
 class IKDatabase:
-    def __init__(self, db_path="iknowledge_db.json"):
-        self.db = TinyDB(db_path)
+    def __init__(self, db_url="sqlite:///iknowledge_db.sqlite"):
+        self.engine = create_engine(db_url)
+        Base.metadata.create_all(self.engine)
+        self.Session = sessionmaker(bind=self.engine)
 
-    def add_course(self, course):
-        self.db.table("Courses").upsert(
-            course.serialize(), Query().title == course.title
-        )
+    def add_course(self, course: Course):
+        with self.Session.begin() as session:
+            session.add(course)
 
-    def get_course(self, title):
-        course_data = self.db.table("Courses").get(Query().title == title)
-        if course_data:
-            return Course.deserialize(course_data)
-        return None
+    def add_slides_to_course(self, course_id: int, slides: List[str]):
+        with self.Session.begin() as session:
+            course = session.query(Course).filter(Course.id == course_id).one_or_none()
+            if course:
+                course.resources.extend(slides)
 
-    def remove_course(self, title):
-        self.db.table("Courses").remove(Query().title == title)
+    def remove_course(self, course_id: int):
+        with self.Session.begin() as session:
+            course = session.query(Course).filter(Course.id == course_id).one()
+            session.delete(course)
 
-if __name__ == '__main__':
-    # Usage:
-    ik_db = IKDatabase()
-    course = Course("CS101", "Introduction to CS")
-    lecture = Lecture("Lecture 1")
-    lecture.add_resource("Slide 1")
-    card = Card()
-    lecture.add_card(card)
-    course.add_lecture(lecture)
-    ik_db.add_course(course)  # Now adding course to the database
+    def add_lecture(self, course_id: int, lecture: Lecture):
+        with self.Session.begin() as session:
+            course = session.query(Course).filter(Course.id == course_id).one_or_none()
+            if course:
+                course.lectures.append(lecture)
 
-    # Retrieving course from the database
-    retrieved_course = ik_db.get_course("CS101")
+    def remove_lecture(self, lecture_id: int):
+        with self.Session.begin() as session:
+            lecture = session.query(Lecture).filter(Lecture.id == lecture_id).one()
+            session.delete(lecture)
+
+    def rename_lecture(self, lecture_id: int, new_title: str):
+        with self.Session.begin() as session:
+            lecture = (
+                session.query(Lecture).filter(Lecture.id == lecture_id).one_or_none()
+            )
+            if lecture:
+                lecture.title = new_title
+
+    def reorder_lectures(self, course_id: int, new_order: List[int]):
+        with self.Session.begin() as session:
+            course = session.query(Course).filter(Course.id == course_id).one_or_none()
+            if course:
+                course.lectures.sort(key=lambda x: new_order.index(x.id))
+
+    def add_resources_to_lecture(self, lecture_id: int, resources: List[str]):
+        with self.Session.begin() as session:
+            lecture = (
+                session.query(Lecture).filter(Lecture.id == lecture_id).one_or_none()
+            )
+            if lecture:
+                lecture.resources.extend(resources)
+
+    def remove_resources_from_lecture(self, lecture_id: int, resources: List[str]):
+        with self.Session.begin() as session:
+            lecture = (
+                session.query(Lecture).filter(Lecture.id == lecture_id).one_or_none()
+            )
+            if lecture:
+                for resource in resources:
+                    lecture.resources.remove(resource)
+
+    def mark_card_skipped(self, card_id: int):
+        with self.Session.begin() as session:
+            card = session.query(Card).filter(Card.id == card_id).one_or_none()
+            if card:
+                card.skipped = True
+
+    def update_card_presence_count(self, card_id: int, count: int):
+        with self.Session.begin() as session:
+            card = session.query(Card).filter(Card.id == card_id).one_or_none()
+            if card:
+                card.presence_count = count
+
+
+if __name__ == "__main__":
+    db_interface = IKDatabase()
+
+    course = Course(
+        title="CS101",
+        syllabus="Lecture 1 Introduction to CS\nLecture 2 Cervical Spondylosis Rehabilitation Guide",
+    )
+    lecture = Lecture(title="Introduction to CS")
+    card = Card(content="Some card content")
+
+    lecture.cards.append(card)
+    course.lectures.append(lecture)
+
+    db_interface.add_course(course)
+
+    db_interface.mark_card_skipped(1)
+    db_interface.update_card_presence_count(1, 1)

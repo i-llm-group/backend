@@ -93,16 +93,16 @@ class IKDatabase:
     def remove_course(self, title):
         self.db.table("Courses").remove(Query().title == title)
 
+if __name__ == '__main__':
+    # Usage:
+    ik_db = IKDatabase()
+    course = Course("CS101", "Introduction to CS")
+    lecture = Lecture("Lecture 1")
+    lecture.add_resource("Slide 1")
+    card = Card()
+    lecture.add_card(card)
+    course.add_lecture(lecture)
+    ik_db.add_course(course)  # Now adding course to the database
 
-# Usage:
-ik_db = IKDatabase()
-course = Course("CS101", "Introduction to CS")
-lecture = Lecture("Lecture 1")
-lecture.add_resource("Slide 1")
-card = Card()
-lecture.add_card(card)
-course.add_lecture(lecture)
-ik_db.add_course(course)  # Now adding course to the database
-
-# Retrieving course from the database
-retrieved_course = ik_db.get_course("CS101")
+    # Retrieving course from the database
+    retrieved_course = ik_db.get_course("CS101")

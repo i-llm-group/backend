@@ -8,7 +8,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker
 from typing import List
-from objprint import op
 
 Base = declarative_base()
 

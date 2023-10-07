@@ -3,8 +3,7 @@ from collections import namedtuple
 from typing import AnyStr, List
 from enum import Enum, unique
 
-
-TargetStack = namedtuple("TargetStack", "course lecture card")
+TargetStack = namedtuple('TargetStack', 'course lecture card')
 
 
 @unique
@@ -33,17 +32,17 @@ class Commands(Enum):
 
 @unique
 class StatusCode(Enum):
-    success = b"\x00"
-    invalid_command = b"\x01"
+    success = b'\x00'
+    invalid_command = b'\x01'
 
 
 class Backend:
-    def __init__(self, db_path: str, encoding: str = "utf8"):
+    def __init__(self, db_path: str, encoding: str = 'utf8'):
         self._encoding = encoding
         self._db = database.IKDatabase(db_path)  # TODO: check type
 
     def act(self, command: bytes, target_stack: TargetStack, arg: bytes) -> bytes:
-        response : StatusCode = StatusCode.success
+        response: StatusCode = StatusCode.success
         match command:
             case Commands.add_syllabus:
                 lecture_list = ...  # TODO: call llm interface

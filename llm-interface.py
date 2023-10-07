@@ -1,53 +1,67 @@
 from huggingface_hub import snapshot_download
 #download llama2
-model_path = snapshot_download(repo_id='meta-llama/Llama-2-7b-chat-hf',
+_model_path = snapshot_download(repo_id='meta-llama/Llama-2-7b-chat-hf',
                                token='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')
 
 #load in 4bit
 from bigdl.llm.transformers import AutoModelForCausalLM
-model_in_4bit = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path="meta-llama/Llama-2-7b-chat-hf",
+
+_model_in_4bit = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path="meta-llama/Llama-2-7b-chat-hf",
                                                      load_in_4bit=True)
 
 #load tokenizer
 from transformers import LlamaTokenizer
-tokenizer = LlamaTokenizer.from_pretrained(pretrained_model_name_or_path="meta-llama/Llama-2-7b-chat-hf")
+
+_tokenizer = LlamaTokenizer.from_pretrained(pretrained_model_name_or_path="meta-llama/Llama-2-7b-chat-hf")
 
 #save and load low bit model
-save_directory='./llama-2-7b-bigdl-llm-4-bit'
-model_in_4bit.save_low_bit(save_directory)
-del(model_in_4bit)
-tokenizer.save_pretrained(save_directory)
+_save_directory='./llama-2-7b-bigdl-llm-4-bit'
+_model_in_4bit.save_low_bit(_save_directory)
+del(_model_in_4bit)
+_tokenizer.save_pretrained(_save_directory)
 
 # 这里的 AutoModelForCausalLM 是从 bigdl.llm.transformers 导入的
-model_in_4bit = AutoModelForCausalLM.load_low_bit(save_directory)
-tokenizer = LlamaTokenizer.from_pretrained(save_directory)
+_model_in_4bit = AutoModelForCausalLM.load_low_bit(_save_directory)
+_tokenizer = LlamaTokenizer.from_pretrained(_save_directory)
 
 #process pptx files
 from pptx import Presentation
 
-
-def brief_intro(Card):
-    intro='some brief introduction';
+def brief_intro(current_card: card)->str:
+    #generates brief introduction for a card. receives a Card class and outputs a string.
+    intro='INTRODUCTION';
     return intro;
 
-def ask_question(question):
-    answer=''
+
+def ask_question(question:str)->str:
+    #generates answer to certain questions. reveives a string and outputs a string. 
+    answer='ANSWER';
     return answer;
 
-def more_info(Card):
-    info='some more information';
+
+def more_info(current_card:card)->str:
+    #generates more information about a card. receives a card class and outputs a string. 
+    info='MORE INDORMATION';
     return info;
 
-def relative_questions():
-    question_list=[''];
+
+def relative_questions()->list:
+    #outputs a list when called.
+    question_list=['Q1'];
     return question_list;
 
-def get_sylla(syllabus):
-    return lec_list;
 
-def dump_slides(slides_collection):
+def get_sylla(syllabus:str)->dict:
+    #read syllabus and outputs a list of lectures. receives a string and outputs a dictionary.
+    return lec_dict;
+
+
+def dump_slides(slides:Presentation,lec_dict:dict):
+    #read slides and attach them to lectures. receives a .pptx file and a dictionary.
     return;
 
-def get_card(slides):
+
+def get_card(slides:Presentation)->list:
+    #generates cards. receives a .pptx file and outputs a list.
     return card_list;
 

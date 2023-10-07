@@ -2,8 +2,6 @@ import database
 from collections import namedtuple
 from typing import AnyStr, List
 
-ENCODING = 'utf8'
-
 TargetStack = namedtuple('TargetStack', 'course lecture card')
 
 
@@ -36,8 +34,9 @@ class StatusCode:
 
 
 class Backend:
-    def __init__(self, db_path: AnyStr):
-        self.db = database.IKDatabase(db_path)  # TODO: check type
+    def __init__(self, db_path: AnyStr, encoding: str = 'utf8'):
+        self._encoding = encoding
+        self._db = database.IKDatabase(db_path)  # TODO: check type
 
     def act(self, command: bytes, target_stack: TargetStack, arg: bytes) -> bytes:
         response: bytes = StatusCode.success
@@ -52,15 +51,15 @@ class Backend:
             # TODO: change the order
             ...
         elif command == Commands.add_lecture:
-            lecture_name: str = arg[:128].decode(ENCODING)  # 128-byte string
-            lecture_brief: str = arg[128:].decode(ENCODING)
+            lecture_name: str = arg[:128].decode(self._encoding)  # 128-byte string
+            lecture_brief: str = arg[128:].decode(self._encoding)
             # TODO: add lecture
             ...
         elif command == Commands.remove_lecture:
             # TODO: remove lecture
             ...
         elif command == Commands.rename_lecture:
-            lecture_name_new: str = arg.decode(ENCODING)
+            lecture_name_new: str = arg.decode(self._encoding)
             # TODO: rename lecture
             ...
         elif command == Commands.add_lecture_resource:
@@ -79,11 +78,11 @@ class Backend:
             card_flag: bool = bool(arg[0])
             # TODO: update flag
         elif command == Commands.fetch_information:
-            subject: str = arg.decode(ENCODING)
+            subject: str = arg.decode(self._encoding)
             model_response: AnyStr = ...  # TODO: call llm interface (with `subject`)
             # TODO: edit response
         elif command == Commands.fetch_response:
-            subject: str = arg.decode(ENCODING)
+            subject: str = arg.decode(self._encoding)
             model_response: AnyStr = ...  # TODO: call llm interface (with `subject`)
             # TODO: edit response
         else:

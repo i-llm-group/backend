@@ -27,20 +27,22 @@ _tokenizer = LlamaTokenizer.from_pretrained(_save_directory)
 #process pptx files
 from pptx import Presentation
 
-def brief_intro(current_card: card)->str:
-    #generates brief introduction for a card. receives a Card class and outputs a string.
+from database.py import Card
+
+def brief_intro(current_card: Card)->str:
+    #generates brief introduction for a card.
     intro='INTRODUCTION';
     return intro;
 
 
 def ask_question(question:str)->str:
-    #generates answer to certain questions. reveives a string and outputs a string. 
+    #generates answer to certain questions.
     answer='ANSWER';
     return answer;
 
 
-def more_info(current_card:card)->str:
-    #generates more information about a card. receives a card class and outputs a string. 
+def more_info(current_card:Card)->str:
+    #generates more information about a card. 
     info='MORE INDORMATION';
     return info;
 
@@ -52,16 +54,16 @@ def relative_questions()->list:
 
 
 def get_sylla(syllabus:str)->dict:
-    #read syllabus and outputs a list of lectures. receives a string and outputs a dictionary.
+    #read syllabus and outputs a list of lectures.
     return lec_dict;
 
 
-def dump_slides(slides:Presentation,lec_dict:dict):
-    #read slides and attach them to lectures. receives a .pptx file and a dictionary.
+def dump_slides(slides:bytes,lec_dict:dict):
+    #read slides and attach them to lectures.
     return;
 
 
-def get_card(slides:Presentation)->list:
-    #generates cards. receives a .pptx file and outputs a list.
+def get_card(slides:bytes)->list:
+    #generates cards.
     return card_list;
 

@@ -1,1 +1,5 @@
-tinydb~=4.8.0
+greenlet==3.0.0
+setuptools==68.0.0
+SQLAlchemy==2.0.21
+typing_extensions==4.8.0
+wheel==0.37.1

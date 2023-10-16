@@ -53,9 +53,9 @@ def relative_questions() -> list:
     return question_list
 
 
-def get_sylla(syllabus:str)->dict:
+def get_sylla(syllabus:bytes)->list:
     #read syllabus and outputs a list of lectures.
-    return lec_dict;
+    return lec_list;
 
 
 def dump_slides(slides:bytes,lec_dict:dict):
